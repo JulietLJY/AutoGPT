@@ -4,7 +4,8 @@ from __future__ import annotations
 
 COMMAND_CATEGORY = "web_browse"
 COMMAND_CATEGORY_TITLE = "Web Browsing"
-
+import json	
+import pprint
 import logging
 import re
 from pathlib import Path
@@ -36,13 +37,13 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager as EdgeDriverM
 
 from ..registry import ability
 from forge.sdk.errors import *
+from forge.sdk import PromptEngine, chat_completion_request
+
 import functools
 import re
 from typing import Any, Callable
 from urllib.parse import urljoin, urlparse
-
 from requests.compat import urljoin
-
 
 from bs4 import BeautifulSoup
 from requests.compat import urljoin
@@ -95,16 +96,18 @@ def validate_url(func: Callable[..., Any]) -> Any:
             ValueError if the url fails any of the validation tests
         """
         # Most basic check if the URL is valid:
+        print(url)
         if not re.match(r"^https?://", url):
-            raise ValueError("Invalid URL format")
+            raise ValueError(f"Invalid URL format: {url}")
         if not is_valid_url(url):
-            raise ValueError("Missing Scheme or Network location")
+            raise ValueError(f"Missing Scheme or Network location {url}")
         # Restrict access to local files
         if check_local_file_access(url):
-            raise ValueError("Access to local files is restricted")
+            raise ValueError(f"Access to local files is restricted {url}")
         # Check URL length
         if len(url) > 2000:
-            raise ValueError("URL is too long")
+            raise ValueError(f"URL is too long {url}")
+        kwargs[url] = url
 
         return func(sanitize_url(url), *args, **kwargs)
 
@@ -177,15 +180,11 @@ def check_local_file_access(url: str) -> bool:
     ]
     return any(url.startswith(prefix) for prefix in local_prefixes)
 
-
-
-
 logger = logging.getLogger(__name__)
-
 FILE_DIR = Path(__file__).parent.parent
 TOKENS_TO_TRIGGER_SUMMARY = 50
 LINKS_TO_RETURN = 20
-
+prompt_engine = PromptEngine("gpt-3.5-turbo")
 
 class BrowsingError(CommandExecutionError):
     """An error occurred while trying to browse the page"""
@@ -193,7 +192,8 @@ class BrowsingError(CommandExecutionError):
 
 @ability(
     name="read_webpage",
-    description="Read a webpage, and extract specific information from it if a question is specified. If you are looking to extract specific information from the webpage, you should specify a question.",
+    # description="Read a webpage, and extract specific information from it if a question is specified. If you are looking to extract specific information from the webpage, you should specify a question.",
+    description="Read a webpage, and extract specific information from it. You should specify a question.",
     parameters=[
         {
             "name": "url",
@@ -201,25 +201,25 @@ class BrowsingError(CommandExecutionError):
             "type": "string",
             "required": True,
         },
-                {
+        {
             "name": "question",
             "description": "A question that you want to answer using the content of the webpage.",
             "type": "string",
-            "required": False,
-        }
+            "required": True,
+        },
     ],
     output_type="string",
-)
-@validate_url
+) 
+# @validate_url
 async def read_webpage(agent, task_id: str, url: str, question: str = "") -> Tuple(str, List[str]):
-    """Browse a website and return the answer and links to the user
+    """Browse a website and return the answer to the user
 
     Args:
         url (str): The url of the website to browse
         question (str): The question to answer using the content of the webpage
 
     Returns:
-        str: The answer and links to the user and the webdriver
+        str: The answer to the user
     """
     driver = None
     try:
@@ -234,7 +234,35 @@ async def read_webpage(agent, task_id: str, url: str, question: str = "") -> Tup
         # Limit links to LINKS_TO_RETURN
         if len(links) > LINKS_TO_RETURN:
             links = links[:LINKS_TO_RETURN]
-        return (text, links)
+
+        text_fmt = f"'''{text}'''" if "\n" in text else f"'{text}'"
+
+        if question != '':
+            prompt_kwargs = {
+                "input": text_fmt,
+                "question": question,
+            }
+            prompt = prompt_engine.load_prompt("qa", **prompt_kwargs)
+            if len(prompt.split()) > 2048:
+                prompt = ' '.join(prompt.split()[:2048])
+            messages = [{"role": "user", "content": prompt}]
+            # print('#'*100, prompt)
+
+            chat_completion_kwargs = {
+                "messages": messages,
+                "model": "gpt-3.5-turbo",
+            }
+
+            chat_response = await chat_completion_request(**chat_completion_kwargs)
+
+            answer = chat_response["choices"][0]["message"]["content"]
+
+            return answer
+        
+        else:
+            links_fmt = "\n".join(f"- {link}" for link in links)
+            text_links_fmt =  f"Information gathered from webpage: {text_fmt}\n\nLinks:\n{links_fmt}"
+            return text_links_fmt[:4096]
 
     except WebDriverException as e:
         # These errors are often quite long and include lots of context.
@@ -372,4 +400,5 @@ def close_browser(driver: WebDriver) -> None:
         None
     """
     driver.quit()
+
 

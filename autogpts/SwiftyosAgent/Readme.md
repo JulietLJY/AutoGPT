@@ -1,8 +1,33 @@
+## Command
 ./run arena enter SwiftyosAgent
 ./run agent start SwiftyosAgent
 
-./run arena enter CodeAgent
-./run agent start CodeAgent
+## TODO
+### TaskList
+1. **Search websites for provided information**
+
+Search the website of solution code of the two sum problem solution.
+
+Search the website of arguments of transformers.Trainer().
+
+2. **Read websites and answer questions**
+
+Read the website https://huggingface.co/docs/transformers/main_classes/trainer. 
+Question: "What're the arguments of transformers.Trainer()?"
+
+Read the website https://huggingface.co/codellama. 
+Question: "Extract links of the codellama pretrained models."
+
+Read the website https://github.com/azl397985856/leetcode/blob/master/problems/1.two-sum.en.md
+Question: "Extract the solution codes of the two sum problem solution."
+
+3. **Search websites, Read websites and Answer questions**
+
+Search the arguments of transformers.Trainer().
+
+Search the download links of the codellama pretrained models.
+
+Search the solution code of the two sum problem solution.
 
 ## Idea
 **What is a USEFUL coding Agent?**
@@ -36,7 +61,5 @@ add(1, 1) # output: 2
 那么LLM能否自动运行程序并且展示真实输出结果？
 目前的Coding LLM Agent只是按照规定的格式，例如Humaneval的function，或者leetcode的solution，输入人为设定的测试框架
 但是我们想要的是LLM自动根据需求设计test程序并且调用，程序的格式不受限制，且由LLM自己设计测试框架，而不是人为设计
-
-## TODO
 
 

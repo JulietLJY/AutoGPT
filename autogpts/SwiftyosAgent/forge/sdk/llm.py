@@ -4,8 +4,9 @@ import openai
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 from .forge_log import ForgeLogger
+import litellm
+litellm.api_base = "https://yunfan.smoa.cc/v1/chatbotmodel/v1"
 from litellm import completion, acompletion, AuthenticationError, InvalidRequestError
-
 LOG = ForgeLogger(__name__)
 
 
@@ -17,7 +18,6 @@ async def chat_completion_request(
     try:
         kwargs["model"] = model
         kwargs["messages"] = messages
-
         resp = await acompletion(**kwargs)
         return resp
     except AuthenticationError as e:
@@ -28,7 +28,6 @@ async def chat_completion_request(
         LOG.error("Unable to generate ChatCompletion response")
         LOG.error(f"Exception: {e}")
         raise
-
 
 @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
 async def create_embedding_request(

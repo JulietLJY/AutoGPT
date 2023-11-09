@@ -54,6 +54,7 @@ class Ability(pydantic.BaseModel):
         Returns:
             Any: The result of the method call.
         """
+
         return self.method(*args, **kwds)
 
     def __str__(self) -> str:
@@ -178,11 +179,11 @@ class AbilityRegister:
             Exception: If there is an error in running the ability.
         """
         try:
+            # print(self.abilities)
             ability = self.abilities[ability_name]
             return await ability(self.agent, task_id, *args, **kwds)
         except Exception:
             raise
-
 
 if __name__ == "__main__":
     import sys

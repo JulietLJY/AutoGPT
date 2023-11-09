@@ -239,6 +239,7 @@ class ConfigBuilder(Configurable[Config]):
             "embedding_model": os.getenv("EMBEDDING_MODEL"),
             "browse_spacy_language_model": os.getenv("BROWSE_SPACY_LANGUAGE_MODEL"),
             "openai_api_key": os.getenv("OPENAI_API_KEY"),
+            "openai_api_base": os.getenv("OPENAI_API_BASE_URL"),
             "use_azure": os.getenv("USE_AZURE") == "True",
             "azure_config_file": project_root
             / Path(os.getenv("AZURE_CONFIG_FILE", AZURE_CONFIG_FILE)),
@@ -328,8 +329,8 @@ class ConfigBuilder(Configurable[Config]):
             )
             config_dict.update(azure_config)
 
-        elif os.getenv("OPENAI_API_BASE_URL"):
-            config_dict["openai_api_base"] = os.getenv("OPENAI_API_BASE_URL")
+        # elif os.getenv("OPENAI_API_BASE_URL"):
+        config_dict["openai_api_base"] = os.getenv("OPENAI_API_BASE_URL")
 
         openai_organization = os.getenv("OPENAI_ORGANIZATION")
         if openai_organization is not None:
@@ -395,6 +396,7 @@ def assert_config_has_openai_api_key(config: Config) -> None:
         if re.search(key_pattern, openai_api_key):
             os.environ["OPENAI_API_KEY"] = openai_api_key
             config.openai_api_key = openai_api_key
+
             print(
                 Fore.GREEN
                 + "OpenAI API key successfully set!\n"

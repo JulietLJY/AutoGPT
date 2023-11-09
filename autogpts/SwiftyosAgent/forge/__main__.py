@@ -34,6 +34,7 @@ d88P     888  "Y88888  "Y888 "Y88P"   "Y8888P88 888           888
 \n"""
 
 if __name__ == "__main__":
+    ######################## create localhost ########################
     print(logo)
     port = os.getenv("PORT", 8000)
     LOG.info(f"Agent server starting on http://localhost:{port}")
@@ -43,3 +44,33 @@ if __name__ == "__main__":
     uvicorn.run(
         "forge.app:app", host="localhost", port=port, log_level="error", reload=True
     )
+
+    ######################## debug ########################
+    # import os
+    # from forge.agent import ForgeAgent
+    # from forge.sdk import LocalWorkspace, StepRequestBody, Step, StepOutput, Status
+    # from .db import ForgeDatabase
+    
+    # database_name = os.getenv("DATABASE_STRING")
+    # workspace = LocalWorkspace(os.getenv("AGENT_WORKSPACE"))
+    # database = ForgeDatabase(database_name, debug_enabled=False)
+    # agent = ForgeAgent(database=database, workspace=workspace)
+
+    # from datetime import datetime
+
+    # step_request = Step(
+    #     created_at=datetime.now(),
+    #     modified_at=datetime.now(),
+    #     task_id="50da533e-3904-4401-8a07-c49adf88b5eb",
+    #     step_id="6bb1801a-fd80-45e8-899a-4dd723cc602e",
+    #     name="Write to file",
+    #     status=Status.created,
+    #     output="I am going to use the write_to_file command and write Washington to a file called output.txt",
+    #     additional_output=StepOutput(),
+    #     artifacts=[],
+    #     is_last=True
+    # )
+    # output = agent.execute_step(task_id='debug', step_request=step_request).output
+    # LOG.info(f'Agent Output: {output}')
+    # import pdb;pdb.set_trace()
+
