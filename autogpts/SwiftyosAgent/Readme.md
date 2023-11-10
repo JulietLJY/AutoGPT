@@ -21,6 +21,16 @@ Question: "Extract links of the codellama pretrained models."
 Read the website https://github.com/azl397985856/leetcode/blob/master/problems/1.two-sum.en.md
 Question: "Extract the solution codes of the two sum problem solution."
 
+Read the website https://leetcode.com/problems/two-sum/solutions/3619262/3-method-s-c-java-python-beginner-friendly/
+Question: "Extract the solution codes of the two sum problem solution."
+
+Read the website: https://raw.githubusercontent.com/walkccc/LeetCode/main/solutions/2577.%20Minimum%20Time%20to%20Visit%20a%20Cell%20In%20a%20Grid/2577.py. 
+Question: Extract the solution code and wrap it in ```python ```.
+
+Read the website: https://raw.githubusercontent.com/walkccc/LeetCode/main/solutions/2577.%20Minimum%20Time%20to%20Visit%20a%20Cell%20In%20a%20Grid/2577.py. 
+Question: Extract the solution code and wrap it in ```python ```
+Savepath: solution.py
+
 3. **Search websites, Read websites and Answer questions**
 
 Search the arguments of transformers.Trainer().

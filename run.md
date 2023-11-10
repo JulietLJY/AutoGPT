@@ -1,8 +1,6 @@
 ./run arena enter SwiftyosAgent
 ./run agent start SwiftyosAgent
 
-./run arena enter CodeAgent
-./run agent start CodeAgent
 
 ## Idea
 **What is a USEFUL coding Agent?**

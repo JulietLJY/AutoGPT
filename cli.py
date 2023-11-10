@@ -15,6 +15,14 @@ except ImportError:
     import click
 
 
+# try:
+#     import leetcode
+# except ImportError:
+#     import os
+
+#     os.system("pip3 install leetcode")
+
+
 @click.group()
 def cli():
     pass

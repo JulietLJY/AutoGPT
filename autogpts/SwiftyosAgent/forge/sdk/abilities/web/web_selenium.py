@@ -193,7 +193,7 @@ class BrowsingError(CommandExecutionError):
 @ability(
     name="read_webpage",
     # description="Read a webpage, and extract specific information from it if a question is specified. If you are looking to extract specific information from the webpage, you should specify a question.",
-    description="Read a webpage, and extract specific information from it. You should specify a question.",
+    description="Read a webpage, and answer the question using the content of the webpage. If you want to save the answer, you should specify a save path",
     parameters=[
         {
             "name": "url",
@@ -207,16 +207,23 @@ class BrowsingError(CommandExecutionError):
             "type": "string",
             "required": True,
         },
+        {
+            "name": "save_path",
+            "description": "A path to save the answer to the question.",
+            "type": "string",
+            "required": False,
+        },
     ],
     output_type="string",
 ) 
 # @validate_url
-async def read_webpage(agent, task_id: str, url: str, question: str = "") -> Tuple(str, List[str]):
+async def read_webpage(agent, task_id: str, url: str, question: str, save_path: str = None) -> Tuple(str, List[str]):
     """Browse a website and return the answer to the user
 
     Args:
         url (str): The url of the website to browse
         question (str): The question to answer using the content of the webpage
+        save_path (str): A path to save the answer to the question
 
     Returns:
         str: The answer to the user
@@ -257,12 +264,16 @@ async def read_webpage(agent, task_id: str, url: str, question: str = "") -> Tup
 
             answer = chat_response["choices"][0]["message"]["content"]
 
-            return answer
-        
         else:
             links_fmt = "\n".join(f"- {link}" for link in links)
             text_links_fmt =  f"Information gathered from webpage: {text_fmt}\n\nLinks:\n{links_fmt}"
-            return text_links_fmt[:4096]
+            answer = text_links_fmt[:4096]
+
+        if save_path:
+            with open(save_path, 'w') as f:
+                f.write(answer)
+
+        return answer
 
     except WebDriverException as e:
         # These errors are often quite long and include lots of context.

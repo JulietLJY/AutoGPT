@@ -26,6 +26,8 @@ selenium = "^4.13.0"
 bs4 = "^0.0.1"
 agbenchmark = { path = "../../benchmark", optional = true }
 webdriver-manager = "^4.0.1"
+leetcode = "^1.5.0"
+
 
 [tool.poetry.extras]
 benchmark = ["agbenchmark"]

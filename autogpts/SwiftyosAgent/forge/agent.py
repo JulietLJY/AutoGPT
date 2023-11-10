@@ -12,18 +12,38 @@ from forge.sdk import (
     ChromaMemStore	
 )
 import json	
+import os 
 import pprint
 
-import openai
-openai.api_base = "https://yunfan.smoa.cc/v1/chatbotmodel/v1"
-
-
 LOG = ForgeLogger(__name__)
-
 
 class ForgeAgent(Agent):
     def __init__(self, database: AgentDB, workspace: Workspace):
         super().__init__(database, workspace)
+        self.leetcode_api_instance = self.get_leetcode_api_instance()
+
+    def get_leetcode_api_instance(self):
+        """
+        Get the leetcode api instance
+        """
+        import leetcode
+        import leetcode.auth
+        configuration = leetcode.Configuration()
+
+        # From Dev Tools/Application/Cookies/LEETCODE_SESSION
+        with open('/home/jyli/Agent/AutoGPT/autogpts/SwiftyosAgent/forge/leetcode_session') as f:
+            leetcode_session = f.read()
+        csrf_token = leetcode.auth.get_csrf_cookie(leetcode_session)
+
+        configuration.api_key["x-csrftoken"] = csrf_token
+        configuration.api_key["csrftoken"] = csrf_token
+        configuration.api_key["LEETCODE_SESSION"] = leetcode_session
+        configuration.api_key["Referer"] = "https://leetcode.com"
+        configuration.debug = False
+
+        api_instance = leetcode.DefaultApi(leetcode.ApiClient(configuration))
+
+        return api_instance
 
     async def create_task(self, task_request: TaskRequestBody) -> Task:
         task = await super().create_task(task_request)
