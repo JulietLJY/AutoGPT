@@ -14,7 +14,8 @@ from forge.sdk import (
 import json	
 import os 
 import pprint
-
+import pandas as pd
+from tqdm import tqdm
 LOG = ForgeLogger(__name__)
 
 class ForgeAgent(Agent):
@@ -61,74 +62,87 @@ class ForgeAgent(Agent):
             task_id=task_id, input=step_request, is_last=True
         )
 
-        # Log the message
         LOG.info(f"\t✅ Final Step completed: {step.step_id} input: {step.input[:19]}")
 
-        # Initialize the PromptEngine with the "gpt-3.5-turbo" model
         prompt_engine = PromptEngine("gpt-3.5-turbo")
-
-        # Load the system and task prompts
+        
         system_prompt = prompt_engine.load_prompt("system-format")
 
-        # Initialize the messages list with the system prompt
-        messages = [
-            {"role": "system", "content": system_prompt},
-        ]
-
-        # Define the task parameters
         LOG.info(f"User Input: {step.input}")
-        task_kwargs = {
-            "task": step.input,
-            "abilities": self.abilities.list_abilities_for_prompt(),
-        }
+        if step.input.lower() in ['leetcode-hard-gym', 'leetcode', 'lc']:
+            data_path = "/home/jyli/Agent/AutoGPT/autogpts/SwiftyosAgent/data/leetcode_hard_solutions.jsonl"
+            
+            dataset = pd.read_json(data_path, lines=True)[:1]
+            for question_id, data in tqdm(dataset.iterrows()):
+                input_kwargs = {
+                    "website": data["url"], 
+                }
+                savepath = f"/home/jyli/Agent/AutoGPT/autogpts/SwiftyosAgent/solutions/{data['question_title'].lower().replace(' ', '-')}"
+                input_prompt = prompt_engine.load_prompt("leetcode-hard-gym", **input_kwargs)
 
-        # Load the task prompt with the defined task parameters
-        task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
+                LOG.info(f"User Input: {input_prompt}")
+                task_kwargs = {
+                    "task": input_prompt,
+                    "abilities": self.abilities.list_abilities_for_prompt(),
+                }
+                task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
 
-        # Append the task prompt to the messages list
-        messages.append({"role": "user", "content": task_prompt})
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": task_prompt},
+                ]
 
+                step = await self.get_step_output(task_id, step, messages)
+
+                with open(savepath, 'w') as f:
+                    f.write(step.output)
+
+            return step
+
+        else:
+            task_kwargs = {
+                "task": step.input,
+                "abilities": self.abilities.list_abilities_for_prompt(),
+            }
+
+            task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": task_prompt},
+            ]
+
+            step = await self.get_step_output(task_id, step, messages)
+            return step
+
+    async def get_step_output(self, task_id, step, messages) -> Step:
         try:
-            # Define the parameters for the chat completion request
             chat_completion_kwargs = {
                 "messages": messages,
                 "model": "gpt-3.5-turbo",
             }
-
-            # Make the chat completion request and parse the response
             chat_response = await chat_completion_request(**chat_completion_kwargs)
-
             answer = json.loads(chat_response["choices"][0]["message"]["content"])
-
-            # Log the answer for debugging purposes
             LOG.info(pprint.pformat(answer))
 
         except json.JSONDecodeError as e:
-            # Handle JSON decoding errors
             LOG.error(f"Unable to decode chat response: {chat_response}")
+
         except Exception as e:
-            # Handle other exceptions
             LOG.error(f"Unable to generate chat response: {e}")
 
-        # Extract the ability from the answer
         ability = answer["ability"]
-
-        # Run the ability and get the output
-        # We don't actually use the output in this example
 
         LOG.info(f"Function: {ability['name']}, Args: {ability['args']}")
         output = await self.abilities.run_ability(
             task_id, ability["name"], **ability["args"]
         )
-
-        print(output)
         
-        # Set the step output to the "speak" part of the answer
-        if "thoughts" in answer:
+        if "thoughts" in answer and "speak" in answer["thoughts"]:
             step.output = str(answer["thoughts"]["speak"]) + str(output)
         else:
-            print(answer)
             step.output = str(answer) + str(output)
 
-        # Return the completed step
+        print(step.output)
+
         return step

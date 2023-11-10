@@ -193,7 +193,7 @@ class BrowsingError(CommandExecutionError):
 @ability(
     name="read_webpage",
     # description="Read a webpage, and extract specific information from it if a question is specified. If you are looking to extract specific information from the webpage, you should specify a question.",
-    description="Read a webpage, and answer the question using the content of the webpage. If you want to save the answer, you should specify a save path",
+    description="Read a webpage, and answer the question using the content of the webpage.",  #  If you want to save the answer, you should specify a save path
     parameters=[
         {
             "name": "url",
@@ -207,17 +207,17 @@ class BrowsingError(CommandExecutionError):
             "type": "string",
             "required": True,
         },
-        {
-            "name": "save_path",
-            "description": "A path to save the answer to the question.",
-            "type": "string",
-            "required": False,
-        },
+        # {
+        #     "name": "save_path",
+        #     "description": "A path to save the answer to the question.",
+        #     "type": "string",
+        #     "required": False,
+        # },
     ],
     output_type="string",
 ) 
 # @validate_url
-async def read_webpage(agent, task_id: str, url: str, question: str, save_path: str = None) -> Tuple(str, List[str]):
+async def read_webpage(agent, task_id: str, url: str, question: str) -> Tuple(str, List[str]):
     """Browse a website and return the answer to the user
 
     Args:
@@ -269,6 +269,7 @@ async def read_webpage(agent, task_id: str, url: str, question: str, save_path: 
             text_links_fmt =  f"Information gathered from webpage: {text_fmt}\n\nLinks:\n{links_fmt}"
             answer = text_links_fmt[:4096]
 
+        save_path = None
         if save_path:
             with open(save_path, 'w') as f:
                 f.write(answer)
